@@ -1,0 +1,17 @@
+{
+  "name": "Mapa de obra · Intervención de cubiertas",
+  "short_name": "Mapa de obra",
+  "description": "Plano interactivo para marcar el avance de la intervención de cubiertas por bloque y apartamento.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EAEFF1",
+  "theme_color": "#12222D",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

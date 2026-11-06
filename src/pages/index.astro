@@ -1,0 +1,211 @@
+---
+import Base from '../layouts/Base.astro';
+import { OBRA } from '../config.js';
+import { BLOQUES, ZONAS, VISTA } from '../data/plan.js';
+
+const total = BLOQUES.length * OBRA.apartamentos.length;
+
+// Contorno de un rectángulo con esquinas redondeadas independientes
+function ruta(x, y, w, h, r = {}) {
+  const { tl = 2, tr = 2, br = 2, bl = 2 } = r;
+  return (
+    `M${x + tl},${y} H${x + w - tr} A${tr},${tr} 0 0 1 ${x + w},${y + tr} ` +
+    `V${y + h - br} A${br},${br} 0 0 1 ${x + w - br},${y + h} H${x + bl} ` +
+    `A${bl},${bl} 0 0 1 ${x},${y + h - bl} V${y + tl} A${tl},${tl} 0 0 1 ${x + tl},${y} Z`
+  );
+}
+
+const bloques = BLOQUES.map((b) => {
+  const r = b.id === 9 ? { tl: 24, bl: 24 } : b.id === 1 ? { tr: 24, br: 24 } : {};
+  const fs = Math.round(Math.max(13, Math.min(28, Math.min(b.h * 0.6, b.w * 0.46))));
+  const sh = b.h < 30 ? 3 : 5; // alto de la franja de apartamentos
+  const pad = b.w < 60 ? 4 : 7;
+  const gap = 2;
+  const n = OBRA.apartamentos.length;
+  const segW = (b.w - pad * 2 - gap * (n - 1)) / n;
+  const segY = b.y + b.h - sh - 3;
+  return {
+    ...b,
+    d: ruta(b.x, b.y, b.w, b.h, r),
+    fs,
+    tx: b.x + b.w / 2,
+    ty: b.y + (b.h - sh - 3) / 2,
+    sh,
+    segs: OBRA.apartamentos.map((a, i) => ({
+      apto: a,
+      x: b.x + pad + i * (segW + gap),
+      y: segY,
+      w: segW,
+    })),
+  };
+});
+---
+
+<Base
+  title={`Mapa de obra · ${OBRA.nombre}`}
+  description="Plano interactivo para marcar el avance de la intervención de cubiertas por bloque y apartamento."
+>
+  <header class="cabecera">
+    <div class="cabecera-fila">
+      <div class="marca">
+        <h1>{OBRA.nombre}</h1>
+        <p>{OBRA.conjunto}: {BLOQUES.length} bloques y {total} apartamentos</p>
+        <p id="guardado" class="guardado" aria-live="polite"></p>
+      </div>
+      <div class="avance" aria-live="polite">
+        <p class="avance-texto"><strong id="pct">0%</strong> terminado</p>
+        <div class="barra-avance" role="img" aria-label="Avance general">
+          <span id="barra-ok" class="tramo tramo-ok"></span>
+          <span id="barra-proc" class="tramo tramo-proc"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="filtros" role="group" aria-label="Filtrar por estado">
+      <button type="button" class="filtro" data-filtro="todos" aria-pressed="true">
+        <span class="filtro-nombre">Todos</span>
+        <span class="filtro-n" data-cuenta="todos">{total}</span>
+      </button>
+      <button type="button" class="filtro" data-filtro="0" aria-pressed="false">
+        <i class="punto punto-0"></i>
+        <span class="filtro-nombre">Pendiente</span>
+        <span class="filtro-n" data-cuenta="0">{total}</span>
+      </button>
+      <button type="button" class="filtro" data-filtro="1" aria-pressed="false">
+        <i class="punto punto-1"></i>
+        <span class="filtro-nombre">En proceso</span>
+        <span class="filtro-n" data-cuenta="1">0</span>
+      </button>
+      <button type="button" class="filtro" data-filtro="2" aria-pressed="false">
+        <i class="punto punto-2"></i>
+        <span class="filtro-nombre">Terminado</span>
+        <span class="filtro-n" data-cuenta="2">0</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="herramientas">
+    <div class="grupo" role="group" aria-label="Tipo de vista">
+      <button type="button" class="vista-btn" data-vista="mapa" aria-pressed="true">Mapa</button>
+      <button type="button" class="vista-btn" data-vista="lista" aria-pressed="false">Lista</button>
+    </div>
+
+    <form id="form-ir" class="ir" autocomplete="off" novalidate>
+      <label for="ir-bloque">Ir al bloque</label>
+      <input id="ir-bloque" type="number" inputmode="numeric" min="1" max={BLOQUES.length} placeholder="N.º" />
+    </form>
+
+    <div class="grupo zoom" role="group" aria-label="Zoom del plano">
+      <button type="button" id="zoom-menos" aria-label="Alejar">−</button>
+      <button type="button" id="zoom-reset">Ajustar</button>
+      <button type="button" id="zoom-mas" aria-label="Acercar">+</button>
+    </div>
+
+    <div class="acciones">
+      <button type="button" id="btn-compartir" class="boton">Compartir avance</button>
+      <div class="menu-contenedor">
+        <button type="button" id="btn-export" class="boton boton-primario" aria-haspopup="true" aria-expanded="false">
+          Exportar
+        </button>
+        <div id="menu-export" class="menu" role="menu" hidden>
+          <button type="button" role="menuitem" data-accion="excel">Excel (.xlsx)</button>
+          <button type="button" role="menuitem" data-accion="pdf">PDF</button>
+          <hr />
+          <button type="button" role="menuitem" data-accion="respaldo">Guardar respaldo (.json)</button>
+          <button type="button" role="menuitem" data-accion="cargar">Cargar respaldo</button>
+          <hr />
+          <button type="button" role="menuitem" class="peligro" data-accion="borrar">Borrar todo el avance</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="obra">
+    <section class="lienzo" aria-label="Plano del conjunto">
+      <div id="mapa-vista" class="vista-mapa">
+        <div id="mapa-scroll" class="mapa-scroll">
+          <svg
+            id="plano"
+            viewBox={`${VISTA.x} ${VISTA.y} ${VISTA.w} ${VISTA.h}`}
+            xmlns="http://www.w3.org/2000/svg"
+            role="group"
+            aria-label="Plano del conjunto con los bloques a intervenir"
+          >
+            <defs>
+              <pattern id="cuadricula" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M20 0H0V20" fill="none" class="cuad-linea" />
+              </pattern>
+              <pattern id="rayado" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="7" class="rayado-linea" />
+              </pattern>
+            </defs>
+
+            <rect x={VISTA.x} y={VISTA.y} width={VISTA.w} height={VISTA.h} fill="url(#cuadricula)" />
+
+            {ZONAS.map((z) => (
+              <g class="zona" aria-hidden="true">
+                <rect x={z.x} y={z.y} width={z.w} height={z.h} class="zona-fondo" />
+                <rect x={z.x} y={z.y} width={z.w} height={z.h} fill="url(#rayado)" />
+                <text
+                  x={z.x + z.w / 2}
+                  y={z.y + z.h / 2}
+                  class="zona-nombre"
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                  transform={z.rotar ? `rotate(${z.rotar} ${z.x + z.w / 2} ${z.y + z.h / 2})` : undefined}
+                >
+                  {z.nombre}
+                </text>
+              </g>
+            ))}
+
+            {bloques.map((b) => (
+              <g class="blk" data-id={b.id} data-estado="pendiente" role="button" tabindex="0" aria-label={`Bloque ${b.id}`}>
+                <path d={b.d} class="bg" />
+                <text x={b.tx} y={b.ty} class="num" font-size={b.fs} text-anchor="middle" dominant-baseline="central">
+                  {b.id}
+                </text>
+                {b.segs.map((s) => (
+                  <rect
+                    x={s.x}
+                    y={s.y}
+                    width={s.w}
+                    height={b.sh}
+                    rx="1"
+                    class="seg"
+                    data-apto={s.apto}
+                    data-s="0"
+                  />
+                ))}
+              </g>
+            ))}
+
+            <rect id="anillo" class="anillo" width="0" height="0" rx="3" />
+          </svg>
+        </div>
+        <p class="pista">Toca un bloque para ver sus apartamentos. Arrastra para moverte por el plano.</p>
+      </div>
+
+      <div id="lista-vista" class="vista-lista" hidden>
+        <div id="lista" class="lista"></div>
+      </div>
+    </section>
+
+    <aside id="panel" class="panel" aria-label="Detalle del bloque">
+      <div id="panel-vacio" class="panel-vacio">
+        <h2>Elige un bloque</h2>
+        <p>Toca un bloque en el plano o en la lista para ver sus apartamentos y cambiar su estado.</p>
+        <p class="panel-nota">El avance se guarda solo en este dispositivo. Usa Exportar para sacar un Excel, un PDF o un respaldo.</p>
+      </div>
+      <div id="panel-bloque" hidden></div>
+    </aside>
+  </main>
+
+  <div id="velo" class="velo" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <input id="file-respaldo" type="file" accept="application/json,.json" hidden />
+
+  <script>
+    import '../scripts/app.js';
+  </script>
+</Base>
