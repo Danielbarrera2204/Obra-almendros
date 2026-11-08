@@ -10,8 +10,10 @@
   --tinta-2: #4f616d;
   --linea: #c3cdd3;
 
-  --pend: #cbd2d7; /* pendiente: concreto */
-  --proc: #f2b705; /* en proceso: amarillo de seguridad */
+  --pend: #d63a3a; /* apartamento pendiente: rojo */
+  --proc: #2f6fe0; /* apartamento en proceso: azul */
+  --b-pend: #cbd2d7; /* recuadro del bloque sin iniciar: gris */
+  --b-proc: #f2b705; /* recuadro del bloque en proceso: amarillo */
   --ok: #1b7f68; /* terminado: verde */
   --peligro: #b3261e;
   --foco: #2f6bff;
@@ -189,9 +191,11 @@ button {
 
 .punto-0 {
   background: var(--pend);
+  border-color: var(--pend);
 }
 .punto-1 {
   background: var(--proc);
+  border-color: var(--proc);
 }
 .punto-2 {
   background: var(--ok);
@@ -414,10 +418,10 @@ button {
 }
 
 .blk[data-estado='pendiente'] .bg {
-  fill: var(--pend);
+  fill: var(--b-pend);
 }
 .blk[data-estado='proceso'] .bg {
-  fill: var(--proc);
+  fill: var(--b-proc);
 }
 .blk[data-estado='terminado'] .bg {
   fill: var(--ok);
@@ -445,14 +449,14 @@ button {
 }
 
 .seg {
-  stroke: rgba(18, 34, 45, 0.5);
-  stroke-width: 0.8;
+  stroke: rgba(255, 255, 255, 0.95);
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
 .seg[data-s='0'] {
-  fill: rgba(255, 255, 255, 0.7);
+  fill: var(--pend);
 }
 .seg[data-s='1'] {
   fill: var(--proc);
@@ -497,10 +501,10 @@ button {
 }
 
 .tarjeta[data-estado='pendiente'] {
-  border-left-color: var(--pend);
+  border-left-color: var(--b-pend);
 }
 .tarjeta[data-estado='proceso'] {
-  border-left-color: var(--proc);
+  border-left-color: var(--b-proc);
 }
 .tarjeta[data-estado='terminado'] {
   border-left-color: var(--ok);
@@ -549,10 +553,14 @@ button {
 }
 
 .chip[data-s='0'] {
-  background: #fff;
+  background: var(--pend);
+  border-color: var(--pend);
+  color: #fff;
 }
 .chip[data-s='1'] {
   background: var(--proc);
+  border-color: var(--proc);
+  color: #fff;
 }
 .chip[data-s='2'] {
   background: var(--ok);
@@ -695,10 +703,12 @@ button {
 
 .estados button[aria-checked='true'][data-s='0'] {
   background: var(--pend);
+  color: #fff;
   font-weight: 700;
 }
 .estados button[aria-checked='true'][data-s='1'] {
   background: var(--proc);
+  color: #fff;
   font-weight: 700;
 }
 .estados button[aria-checked='true'][data-s='2'] {

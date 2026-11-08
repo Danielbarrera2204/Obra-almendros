@@ -8,9 +8,15 @@ import { ESTADOS } from '../config.js';
 
 const ETIQ = ESTADOS.map((e) => e.etiqueta);
 const COLOR = [
-  { bg: '#CBD2D7', fg: '#12222D', rgb: [203, 210, 215], rgbFg: [18, 34, 45] },
-  { bg: '#F2B705', fg: '#12222D', rgb: [242, 183, 5], rgbFg: [18, 34, 45] },
+  { bg: '#D63A3A', fg: '#FFFFFF', rgb: [214, 58, 58], rgbFg: [255, 255, 255] },
+  { bg: '#2F6FE0', fg: '#FFFFFF', rgb: [47, 111, 224], rgbFg: [255, 255, 255] },
   { bg: '#1B7F68', fg: '#FFFFFF', rgb: [27, 127, 104], rgbFg: [255, 255, 255] },
+];
+// Color del bloque completo (columna "Estado" del resumen)
+const COLOR_BLOQUE = [
+  { bg: '#CBD2D7', fg: '#12222D' },
+  { bg: '#F2B705', fg: '#12222D' },
+  { bg: '#1B7F68', fg: '#FFFFFF' },
 ];
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -47,6 +53,12 @@ export function hojasExcel(m) {
     backgroundColor: COLOR[s].bg,
     textColor: COLOR[s].fg,
   });
+  const estadoBloque = (s) => ({
+    value: ETIQ[s],
+    align: 'center',
+    backgroundColor: COLOR_BLOQUE[s].bg,
+    textColor: COLOR_BLOQUE[s].fg,
+  });
 
   const resumen = [
     [cab('Bloque'), cab('Terminados'), cab('En proceso'), cab('Pendientes'), cab('Avance'), cab('Estado')],
@@ -56,7 +68,7 @@ export function hojasExcel(m) {
       centro(f.c[1]),
       centro(f.c[0]),
       { value: f.pct / 100, format: '0%', align: 'center' },
-      estadoCelda(f.estado),
+      estadoBloque(f.estado),
     ]),
     [
       { value: 'Total', fontWeight: 'bold', align: 'center' },

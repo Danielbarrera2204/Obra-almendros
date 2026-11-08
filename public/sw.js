@@ -1,6 +1,6 @@
 // Service worker mínimo: deja la app disponible sin internet.
 // Si algún día cambias algo y no se ve, sube el número de versión.
-const VERSION = 'obra-cubiertas-v1';
+const VERSION = 'obra-cubiertas-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
